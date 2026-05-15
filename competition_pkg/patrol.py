@@ -24,8 +24,8 @@ from yasmin import State
 from yasmin import Blackboard
 
 
-class FollowState(State):
-    """FollowStateクラス（Stateクラスの継承）
+class PatrolState(State):
+    """PatrolStateクラス（Stateクラスの継承）
     赤色領域を取得して追従する。
     4つの中継地点を巡回し、赤色物体を検知したらoutcome1に移行する。
     5周したらoutcom3に移行（終了）。
@@ -46,6 +46,7 @@ class FollowState(State):
         )
 
         self.vel_pub = self.node.create_publisher(msg_type=Twist, topic="cmd_vel", qos_profile=10)
+        self.goal_pub = self.node.create_publisher(msg_type=PoseStamped, topic="goal_pose", qos_profile=10)
 
         self.cmd_vel = Twist()
         self.detect_log = "stop"
@@ -180,6 +181,9 @@ class FollowState(State):
             # 1. 赤い物体を検知したら即座に outcome1 へ移行
             if self.red_detected:
                 self.node.get_logger().warn("Red object detected! Shifting to outcome1.")
+                current_wp = self.waypoints[self.current_wp_idx]
+                blackboard.target_x = current_wp.pose.position.x
+                blackboard.target_y = current_wp.pose.position.y
                 # ロボットを停止させる
                 self.vel_pub.publish(Twist())
                 return "outcome1"
